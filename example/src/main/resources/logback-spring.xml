@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="30 seconds">
+    <!-- setting -->
+    <property resource="bootstrap.properties"/>
+    <!-- log packagename -->
+    <property name="LOG_PACKAGE_NAME" value="${log.config.packagename}"/>
+    <!-- log file path -->
+    <property name="LOG_PATH" value="${log.config.path}"/>
+    <!-- log file name -->
+    <property name="LOG_FILE_NAME" value="${log.config.filename}"/>
+    <!-- log days -->
+    <property name="LOG_DAYS" value="${log.config.days}"/>
+    <!-- log filesize log-->
+    <property name="LOG_FILESIZE_LOG" value="${log.config.filesizelog}"/>
+    <!-- log filesize zip-->
+    <property name="LOG_FILESIZE_ZIP" value="${log.config.filesizezip}"/>
+    <!-- log filesize total-->
+    <property name="LOG_TOTAL_FILESIZE" value="${log.config.totalfilesize}"/>
+    <!-- log min count -->
+    <property name="LOG_FILE_MIN" value="${log.config.min}"/>
+    <!-- log max count -->
+    <property name="LOG_FILE_MAX" value="${log.config.max}"/>
+    <!-- pattern -->
+    <property name="LOG_PATTERN" value="%-5level %d{yyyy-MM-dd HH:mm:ss}[%thread] %logger[%method:%line] - %msg%n"/>
+    <!-- setting -->
+    <!-- console log-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    <!-- 압축 모드 -->
+    <if condition='property("log.config.savemode").equals("ZIP")'>
+        <then>
+            <!-- log file zip -->
+            <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}_%i.log.zip</fileNamePattern>
+                    <!-- file min count -->
+                    <minIndex>${LOG_FILE_MIN}</minIndex>
+                    <!-- file max count -->
+                    <maxIndex>${LOG_FILE_MAX}</maxIndex>
+                </rollingPolicy>
+                <!-- file size limit -->
+                <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+                    <maxFileSize>${LOG_FILESIZE_ZIP}</maxFileSize>
+                </triggeringPolicy>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+        </then>
+        <else>
+            <!-- 로그 모드 -->
+            <!-- log file save -->
+            <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <file>${LOG_PATH}/${LOG_FILE_NAME}.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <fileNamePattern>${LOG_PATH}/LOG_%d{yyyy-MM-dd}_${LOG_FILE_NAME}_%i.log</fileNamePattern>
+                    <!-- file days limit -->
+                    <maxHistory>${LOG_DAYS}</maxHistory>
+                    <!-- file size -->
+                    <maxFileSize>${LOG_FILESIZE_LOG}</maxFileSize>
+                    <!-- total file size -->
+                    <totalSizeCap>${LOG_TOTAL_FILESIZE}</totalSizeCap>
+                </rollingPolicy>
+                <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                    <pattern>${LOG_PATTERN}</pattern>
+                </encoder>
+            </appender>
+        </else>
+    </if>
+    <if condition='property("spring.profiles.active").equals("Production")'>
+        <then>
+            <!-- real server -->
+            <logger name="org.springframework" level="INFO"/>
+            <!-- <logger name="org.springframework.security" level="INFO" /> -->
+            <!-- <logger name="org.hibernate" level="INFO"/> -->
+            <logger name="org.hibernate.SQL" level="INFO"/>
+            <logger name="org.hibernate.type" level="INFO"/>
+            <logger name="${LOG_PACKAGE_NAME}" level="INFO"/>
+            <root level="INFO">
+                <appender-ref ref="console"/>
+                <appender-ref ref="FILE"/>
+            </root>
+        </then>
+        <else>
+            <!-- test server -->
+            <logger name="org.springframework" level="DEBUG"/>
+            <!-- <logger name="org.springframework.security" level="DEBUG" /> -->
+            <!-- <logger name="org.hibernate" level="DEBUG"/> -->
+            <logger name="org.hibernate.SQL" level="DEBUG"/>
+            <logger name="org.hibernate.type" level="TRACE"/>
+            <!-- <logger name="org.hibernate.type.BasicTypeRegistry" level="WARN"/> -->
+            <logger name="${LOG_PACKAGE_NAME}" level="DEBUG"/>
+            <root level="DEBUG">
+                <appender-ref ref="console"/>
+                <appender-ref ref="FILE"/>
+            </root>
+        </else>
+    </if>
+</configuration>
